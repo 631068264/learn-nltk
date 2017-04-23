@@ -73,10 +73,17 @@ def cond_freq_dict():
         for genre in ['news', 'romance']
         for word in brown.words(categories=genre)
         ]
+    # genre_word [(cond,event),]
+    # ConditionalFreqDist 统计(条件，事件)个数 字典类型
     cfd = nltk.ConditionalFreqDist(genre_word)
     print(cfd.conditions())
-    print(cfd['news'])
+    print(cfd['news']["Ask"])
     print(cfd['romance'])
+    max = cfd['romance'].most_common(1)
+    print(max)
+
+
+cond_freq_dict()
 
 
 def load_corpus():
@@ -113,6 +120,8 @@ readme()	                the contents of the README file of the corpus
 
 """
 条件频率分布
+ConditionalFreqDist
+
 
 cfdist= ConditionalFreqDist(pairs)      从配对链表中创建条件频率分布
 cfdist.conditions()                     将条件按字母排序
