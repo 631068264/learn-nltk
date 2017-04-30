@@ -9,7 +9,7 @@ import random
 
 import nltk
 from nltk.classify import apply_features
-from nltk.corpus import names
+from nltk.corpus import names, brown
 
 labeled_names = ([(name, 'male') for name in names.words('male.txt')] +
                  [(name, 'female') for name in names.words('female.txt')])
@@ -102,7 +102,65 @@ def doc_classify():
             features['contains({})'.format(word)] = (word in document_words)
         return features
 
-    print(document_features(movie_reviews.words('pos/cv957_8737.txt')))
+    document_features(movie_reviews.words('pos/cv957_8737.txt'))
+
+    featuresets = [(document_features(d), c) for (d, c) in documents]
+    print(featuresets)
+    train_set, test_set = featuresets[100:], featuresets[:100]
+    classifier = nltk.NaiveBayesClassifier.train(train_set)
+    print(nltk.classify.accuracy(classifier, test_set))
+    print(classifier.show_most_informative_features(5))
 
 
-doc_classify()
+def explot_context():
+    """探索上下文语境"""
+
+    def pos_features(sentence, i):
+        features = {"suffix(1)": sentence[i][-1:],
+                    "suffix(2)": sentence[i][-2:],
+                    "suffix(3)": sentence[i][-3:]}
+        if i == 0:
+            features["prev-word"] = "<START>"
+        else:
+            features["prev-word"] = sentence[i - 1]
+        return features
+
+    # pos_features(brown.sents()[0], 8)
+    tagged_sents = brown.tagged_sents(categories='news')
+    featuresets = []
+    for tagged_sent in tagged_sents:
+        untagged_sent = nltk.tag.untag(tagged_sent)
+        for i, (word, tag) in enumerate(tagged_sent):
+            featuresets.append((pos_features(untagged_sent, i), tag))
+
+    size = int(len(featuresets) * 0.1)
+    train_set, test_set = featuresets[size:], featuresets[:size]
+    classifier = nltk.NaiveBayesClassifier.train(train_set)
+    nltk.classify.accuracy(classifier, test_set)
+
+
+"""
+评估:
+    准备测试集
+    测试集准确率
+
+    真阳性True positives 是相关项目中我们正确识别为相关的。
+    真阴性True negatives 是不相关项目中我们正确识别为不相关的。
+    假阳性False positives (或 I 型错误)是不相关项目中我们错误识别为相关的。
+    假阴性False negatives (或 II 型错误)是相关项目中我们错误识别为不相关的。
+
+    精确度(Precision)，表示我们发现的项目中有多少是相关的，TP/(TP+ FP)。
+    召回率(Recall)，表示相关的项目中我们发现了多少，TP/(TP+FN)。
+    F-度量值(F-Measure)(或 F-得分，F-Score)，组合精确度和召回率为一个单独的得分，
+    被定义为精确度和召回率的调和平均数(2 × Precision × Recall)/(Precision + Recall)
+
+    交叉检验 原始语料分成n份 使用一份做测试集 其他做训练集
+
+自动生成分类模型 分类方法
+    决策树
+        缺点：在训练树的低节点，可用的训练数据量可能会变得非常小。因此，这些较低的决策节点可能过拟合训练集
+        解决：当训练数据量变得太小时停止分裂节点   长出一个完整的决策树，但随后进行剪枝剪去在开发测试集上不能提高性能的决策节点
+        缺点：它们强迫特征按照一个特定的顺序进行检查，即使特征可能是相对独立的
+    朴素贝叶斯分类器
+    最大熵分类器
+"""
