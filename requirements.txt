@@ -1,5 +1,6 @@
 appdirs==1.4.3
 attrdict==2.0.0
+Corpora==1.0
 cycler==0.10.0
 gevent==1.2.1
 greenlet==0.4.12
